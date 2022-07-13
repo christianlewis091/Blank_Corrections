@@ -20,8 +20,20 @@ Quality Check on Primary Standards
 
 Match sample types to historal standards of that type for 180 days before present day
 
-Using that associated group of standads, mass balance calculate the blank for each unknown
+Using that associated group of standards, mass balance calculate the blank for each unknown
 
 Output data to a file which can be merged into RLIMS
 Output a text file that can saved into a folder, including useful metadata.
 """
+
+import pandas as pd
+import openpyxl
+df = pd.read_excel(r'H:\The Science\Current Projects\Blank Correction Streamlining\Brainstorm.xlsx', nrows=40)
+
+# FIND ALL THE PRIMARY STANDARDS:
+primary_std = df.loc[(df['Type'] == 'Primary Standard')]
+secondary_std = df.loc[(df['Type'] == 'Secondary')]
+blank = df.loc[(df['Type'] == 'Blank')]
+unknown = df.loc[(df['Type'] == 'Unknown')]
+
+
