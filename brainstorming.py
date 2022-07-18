@@ -72,13 +72,21 @@ for i in range(0, len(primary_standards)):
 
 result = pd.DataFrame({"TP": arr2, "Absolute value, (AMS - IRMS 13C)": arr1})
 
-print("The following standards are outside the selected range of {} per mil difference between IRMS and AMS 13C".format(C13_threshold))
+print("The following standards are outside the selected range of {}\u2030 difference between IRMS and AMS 13C".format(C13_threshold))
 print(result)
+print()
+print()
+""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
+# Let's find what types of samples are in this wheel.....
+unknowns = df.dropna(subset='AMS Category')
+unk_type_list = np.unique(unknowns['AMS Category'])
+print(unk_type_list)
 
-
-
-
+# df['AMS Category'] = str(df['AMS Category'])
+#
+# unknowns = np.unique(df['AMS Category'])
+# print(unknowns)
 
 
 
