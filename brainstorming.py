@@ -30,8 +30,19 @@ Output a text file that can saved into a folder, including useful metadata.
 
 import pandas as pd
 import numpy as np
+from PyAstronomy import pyasl
 import openpyxl
-df = pd.read_excel(r'C:\Users\clewis\Desktop\test4.xlsx')  # export the file from RLIMS
+
+def long_date_to_decimal_date(x):
+    array = []  # define an empty array in which the data will be stored
+    for i in range(0, len(x)):  # initialize the for loop to run the length of our dataset (x)
+        j = x[i]  # assign j: grab the i'th value from our dataset (x)
+        decy = pyasl.decimalYear(j)  # The heavy lifting is done via this Py-astronomy package
+        decy = float(decy)  # change to a float - this may be required for appending data to the array
+        array.append(decy)  # append it all together into a useful column of data
+    return array  # return the new data
+
+df = pd.read_excel(r'C:\Users\clewis\Desktop\test4.xlsx')  # export the file from RLIMS containing TW DATA
 
 primary_standards = df.loc[df['AMS Category'] == 'Primary Standard OxI']  # grab all the OX-1's
 # primary_standards.to_excel('test2.xlsx')
@@ -81,12 +92,26 @@ print()
 # Let's find what types of samples are in this wheel.....
 unknowns = df.dropna(subset='AMS Category')
 unk_type_list = np.unique(unknowns['AMS Category'])
+
+print("The following types of samples are contained in this wheel:")
 print(unk_type_list)
+print()
 
-# df['AMS Category'] = str(df['AMS Category'])
-#
-# unknowns = np.unique(df['AMS Category'])
-# print(unknowns)
+stds_hist = pd.read_excel(r'C:\Users\clewis\Desktop\hist_stds2.xlsx')                                   # import historical standards data
+stds_hist = stds_hist.loc[(stds_hist['Date Run'] != 'NaT')].dropna(subset = 'Date Run').reset_index()    # clean up the dataset for better access
+x = stds_hist['Date Run']                                                                               # next two lines convert run date to decimal date
+stds_hist['Date Run'] = long_date_to_decimal_date(x)
 
+date_bound = max(stds_hist['Date Run']) - 0.5                                                           # set time boundary as 0.5 year (~180 days) from the maximum date in the RLIMS file
+stds_hist = stds_hist.loc[(stds_hist['Date Run'] > date_bound)]                                         # index the data only in the date period that I want.
+
+array = []
+for i in range(0, len(unk_type_list)):  # start a loop for the length of the types of samples found in THIS WHEEL (see above)
+    category = unk_type_list[i]
+    print(category)
+    # for k in range(0, len(stds_hist)):
+    #     row = stds_hist[k]
+    # #     if row['AMS Category'] == category:
+    # #         print(row)
 
 
