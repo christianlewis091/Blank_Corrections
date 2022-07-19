@@ -93,25 +93,90 @@ print()
 unknowns = df.dropna(subset='AMS Category')
 unk_type_list = np.unique(unknowns['AMS Category'])
 
-print("The following types of samples are contained in this wheel:")
-print(unk_type_list)
-print()
+# CATEGORIZE THE SAMPLES BASED ON THEIR PRETREATMENT CATEGORY
+AAA_array = []
+cellulose_array = []
+# Let's find what types of pre-treatments happened in this wheel:
+for i in range(0, len(df)):   # start the loop for the length of the dataframe
+    row = df.iloc[i]          # grab first row
+    if row['Category In Calculation'] == 'Unknown Organic':
+        pretreatment = df.iloc[i+1]
+        pretreatment = pretreatment['Process Name']
+        if pretreatment == 'Acid Alkali Acid':
+            AAA_array.append(row)
+        elif pretreatment == 'Cellulose Extraction':
+            cellulose_array.append(row)
 
-stds_hist = pd.read_excel(r'C:\Users\clewis\Desktop\hist_stds2.xlsx')                                   # import historical standards data
-stds_hist = stds_hist.loc[(stds_hist['Date Run'] != 'NaT')].dropna(subset = 'Date Run').reset_index()    # clean up the dataset for better access
-x = stds_hist['Date Run']                                                                               # next two lines convert run date to decimal date
-stds_hist['Date Run'] = long_date_to_decimal_date(x)
+AAA = pd.DataFrame(AAA_array).reset_index(drop=True)
+x = AAA['Date Run']
+AAA['Date Run'] = long_date_to_decimal_date(x)
+AAA['CorrectionType'] = 'AAA'
 
-date_bound = max(stds_hist['Date Run']) - 0.5                                                           # set time boundary as 0.5 year (~180 days) from the maximum date in the RLIMS file
-stds_hist = stds_hist.loc[(stds_hist['Date Run'] > date_bound)]                                         # index the data only in the date period that I want.
 
-array = []
-for i in range(0, len(unk_type_list)):  # start a loop for the length of the types of samples found in THIS WHEEL (see above)
-    category = unk_type_list[i]
-    print(category)
-    # for k in range(0, len(stds_hist)):
-    #     row = stds_hist[k]
-    # #     if row['AMS Category'] == category:
-    # #         print(row)
+cellulose_array = pd.DataFrame(cellulose_array).reset_index(drop=True)
+x = cellulose_array['Date Run']
+cellulose_array['Date Run'] = long_date_to_decimal_date(x)
+cellulose_array['CorrectionType'] = 'Cellulose'
+
+unknowns = pd.concat([cellulose_array, AAA]).reset_index(drop=True)
+unknowns.to_excel('categorized_samples.xlsx')
+
+# CATEGORIZE THE HISTORICAL STANDARDS BASED ON THEIR PRETREATMENT CATEGORY
+stds_hist = pd.read_excel(r'C:\Users\clewis\Desktop\hist_stds.xlsx')  # import historical standards data
+AAA_standards = []
+cellulose_standards = []
+# Let's find what types of pre-treatments happened in this wheel:
+for i in range(0, len(stds_hist)):   # start the loop for the length of the dataframe
+    row = stds_hist.iloc[i]          # grab first row
+    if row['Category In Calculation'] == 'Background Organic':
+        pretreatment = stds_hist.iloc[i+1]
+        pretreatment = pretreatment['Process Name']
+        if pretreatment == 'Acid Alkali Acid':
+            AAA_standards.append(row)
+        elif pretreatment == 'Cellulose Extraction':
+            cellulose_standards.append(row)
+
+AAA_standards = pd.DataFrame(AAA_standards)
+AAA_standards['Correction Type'] = 'AAA'
+
+cellulose_standards = pd.DataFrame(cellulose_standards)
+cellulose_standards['Correction Type'] = 'Cellulose'
+
+chosen_stds = pd.concat([cellulose_standards, AAA_standards]).dropna(subset = 'Date Run').reset_index(drop=True)
+x = chosen_stds['Date Run']                                                                               # next two lines convert run date to decimal date
+chosen_stds['Date Run'] = long_date_to_decimal_date(x)
+date_bound = max(chosen_stds['Date Run']) - 0.5                        # set time boundary as 0.5 year (~180 days) from the maximum date in the RLIMS file
+chosen_stds = chosen_stds.loc[(chosen_stds['Date Run'] > date_bound)]                                           # index the data only in the date period that I want.
+chosen_stds = chosen_stds.loc[(chosen_stds['Quality Flag'] != 'X..')]
+chosen_stds = chosen_stds.loc[(chosen_stds['Weight Initial'] > 0.3)]
+
+a = chosen_stds.loc[(chosen_stds['Correction Type'] == 'AAA')]
+AAA_MCC = np.average(a['Ratio to standard'])
+AAA_MCC_err = np.std(a['Ratio to standard'])
+
+c = chosen_stds.loc[(chosen_stds['Correction Type'] == 'Cellulose')]
+Cell_MCC = np.average(c['Ratio to standard'])
+Cell_MCC_err = np.std(c['Ratio to standard'])
+
+writer = pd.ExcelWriter('Results.xlsx', engine='openpyxl')
+AAA.to_excel(writer, sheet_name='Unknowns (AAA)')
+cellulose_array.to_excel(writer, sheet_name='Unknowns (Cellulose)')
+a.to_excel(writer, sheet_name='Standards (AAA)')
+c.to_excel(writer, sheet_name='Standard (Cellulose)')
+writer.save()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
