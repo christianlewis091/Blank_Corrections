@@ -27,6 +27,7 @@ Output a text file that can saved into a folder, including useful metadata.
 """
 # TODO: Add first step: download TW data from RLIMS
 # TODO: Bring up to Valerie, RLIMS output file has two columns titled: "Sample Description"
+# TODO: In order to streamline yet more, we need to enable ODBC/JDBC which communicates from script to database and back (or just leave it as Import XCAMS Results -> Export as .mer file)
 
 import pandas as pd
 import numpy as np
@@ -68,7 +69,7 @@ print()
 
 arr1 = []  # initialize a few empty arrays for later use
 arr2 = []
-C13_threshold = 0.01
+C13_threshold = 2
 for i in range(0, len(primary_standards)):
     row = primary_standards.iloc[i]         # access the first row
     ams = row['delta13C_AMS']
@@ -82,11 +83,11 @@ for i in range(0, len(primary_standards)):
         arr2.append(row['TP'])
 
 result = pd.DataFrame({"TP": arr2, "Absolute value, (AMS - IRMS 13C)": arr1})
+if len(result) > 0:
+    print("The following standards are outside the selected range of {}\u2030 difference between IRMS and AMS 13C".format(C13_threshold))
+    print(result)
+print()
 
-print("The following standards are outside the selected range of {}\u2030 difference between IRMS and AMS 13C".format(C13_threshold))
-print(result)
-print()
-print()
 """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 
 # Let's find what types of samples are in this wheel.....
@@ -153,10 +154,12 @@ chosen_stds = chosen_stds.loc[(chosen_stds['Weight Initial'] > 0.3)]
 a = chosen_stds.loc[(chosen_stds['Correction Type'] == 'AAA')]
 AAA_MCC = np.average(a['Ratio to standard'])
 AAA_MCC_err = np.std(a['Ratio to standard'])
+print("MCC correction applied to samples made using AAA pretreatment is: {} \u00B1 {}".format(AAA_MCC, AAA_MCC_err))
 
 c = chosen_stds.loc[(chosen_stds['Correction Type'] == 'Cellulose')]
 Cell_MCC = np.average(c['Ratio to standard'])
 Cell_MCC_err = np.std(c['Ratio to standard'])
+print("MCC correction applied to samples made using AAA pretreatment is: {} \u00B1 {}".format(Cell_MCC, Cell_MCC_err))
 
 writer = pd.ExcelWriter('Results.xlsx', engine='openpyxl')
 AAA.to_excel(writer, sheet_name='Unknowns (AAA)')
