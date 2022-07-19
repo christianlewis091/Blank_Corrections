@@ -28,6 +28,10 @@ Output a text file that can saved into a folder, including useful metadata.
 # TODO: Add first step: download TW data from RLIMS
 # TODO: Bring up to Valerie, RLIMS output file has two columns titled: "Sample Description"
 # TODO: In order to streamline yet more, we need to enable ODBC/JDBC which communicates from script to database and back (or just leave it as Import XCAMS Results -> Export as .mer file)
+# TODO: Increase useability for more complex wheels with different sample types:
+# TODO: add rafter v ANSTO Cellulose
+# TODO: pull R number
+# TODO: flag ratio to standard outside of 2-sigma
 
 import pandas as pd
 import numpy as np
