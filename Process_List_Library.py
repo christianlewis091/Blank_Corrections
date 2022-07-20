@@ -14,14 +14,11 @@ import pandas as pd
 # UNOr = unknown organic
 category_list = ['GB', 'CBIn','CBOr','OxI','UNSt', 'UNIn','UNOr']
 
+# Put in here the list of processes that I want to check for in order to correct samples.
+processes = ['Water CO2 Evolution','Cellulose Extraction','Acid Alkali Acid','AMS Submission Results']
 
-
-
-
-
-
-processes = pd.DataFrame({ "Water CO2 Evolution": '14047/11',
-                           "Cellulose Extraction": '40142/1',
-                           "Acid Alkali Acid":     '40142/2'
-                           })
+# processes = pd.DataFrame({ "Water Carbonate CO2 Evolution": '14047/11',
+#                            "Cellulose Extraction": '40142/1',
+#                            "Acid Alkali Acid":     '40142/2'
+#                            })
 secondaries = ['FIRI-D: wood', 'LAC1 coral', 'LAA1 coral']
