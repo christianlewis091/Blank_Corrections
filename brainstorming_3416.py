@@ -58,9 +58,8 @@ df = df[['cat_index', 'Category Field',          # This group of lines gets rid 
 
 df['AMS Category ID XCAMS'] = df['AMS Category ID XCAMS'].fillna(0)  # wherever you see an empty cell in the category 'AMS Category ID XCAMS', add a zero.
                                                                      # I did this so I could relate to it in a few lines
-
-
-df['Collection Decimal Date'] = df['Collection Decimal Date'].fillna(max(df['Date Run']))  # if there is no sampling date, set it to TODAY.
+# TODO the next line needs updating: what happens if a sample doesn't have a collection date?
+df['Collection Decimal Date'] = df['Collection Decimal Date'].fillna(2022)  # if there is no sampling date, set it to this year.
 
 # This very tricky but very important block of code identifies where there is data, and where there is empty space when RLIMS
 # exports in the way I described earlier. The array that is created ("Indexing_array") stores a list of where there is data it will need later
@@ -210,7 +209,6 @@ print("For waters, the MCC (the average of all available standards) is: {} \u00B
 print("Right now, the code does a great job duplicating MCC calculated from RLIMS, but not the  Check RLIMS script for MCC error type (1-sigma? std error?)")
 # </editor-fold>
 
-
 """
 As Jocelyn asked, if you want the calculations to be done in RLIMS, then you can skip this step, and let the code just 
 write everything above to excel. But, I want all the calculatinos to be done via python to save time, and then the files
@@ -252,6 +250,8 @@ def radiocarbon_calcs(dataframe_used):
     return template_dataframe
 
 AAA = radiocarbon_calcs(AAA)
+Cell = radiocarbon_calcs(Cell)
+waters = radiocarbon_calcs(waters)
 
 # <editor-fold desc="Write Data to Excel">
 writer = pd.ExcelWriter('Results.xlsx', engine='openpyxl')
