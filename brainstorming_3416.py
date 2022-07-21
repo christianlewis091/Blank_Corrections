@@ -21,6 +21,7 @@ import pandas as pd
 import numpy as np
 from Process_List_Library import processes
 from blank_correction_functions import long_date_to_decimal_date
+from scipy.stats import sem
 pd.options.mode.chained_assignment = None  # default='warn'
 """
 This script is written to use a specific output file from RLIMS which includes exported data from the tables:
@@ -51,10 +52,15 @@ df = df[['cat_index', 'Category Field',          # This group of lines gets rid 
          'delta13C_IRMS',
          'delta13C_IRMS_Error',
          'delta13C_AMS','delta13C_AMS_Error',
-         'Ratio to standard','Ratio to standard error']]
+         'Ratio to standard','Ratio to standard error',
+         'delta13C_In_Calculation','Collection Decimal Date','Date Run']]
+
 
 df['AMS Category ID XCAMS'] = df['AMS Category ID XCAMS'].fillna(0)  # wherever you see an empty cell in the category 'AMS Category ID XCAMS', add a zero.
                                                                      # I did this so I could relate to it in a few lines
+
+
+df['Collection Decimal Date'] = df['Collection Decimal Date'].fillna(max(df['Date Run']))  # if there is no sampling date, set it to TODAY.
 
 # This very tricky but very important block of code identifies where there is data, and where there is empty space when RLIMS
 # exports in the way I described earlier. The array that is created ("Indexing_array") stores a list of where there is data it will need later
@@ -185,16 +191,67 @@ Water_stds = chosen_stds.loc[(chosen_stds['R'] == '14047/11')].reset_index(drop=
 rounding_decimal = 5
 AAA_blank = np.average(AAA_stds['Ratio to standard'])                          # Calculate the average RTS of this blank, and its standard deviation. Then print it with
 AAA_blank_1sigma = np.std(AAA_stds['Ratio to standard'])                       # the number of decimal points specified above.
+AAA['MCC'] = AAA_blank
+AAA['MCC_error'] = AAA_blank_1sigma
 print("For AAA, the MCC (the average of all available standards) is: {} \u00B1 {}".format(round(AAA_blank, rounding_decimal), round(AAA_blank_1sigma, rounding_decimal)))
 
 Cell_blank = np.average(Cell_stds['Ratio to standard'])
 Cell_blank_1sigma = np.std(Cell_stds['Ratio to standard'])
+Cell['MCC'] = Cell_blank
+Cell['MCC_error'] = Cell_blank_1sigma
 print("For Cellulose, the MCC (the average of all available standards) is: {} \u00B1 {}".format(round(Cell_blank, rounding_decimal), round(Cell_blank_1sigma, rounding_decimal)))
 
 water_blank = np.average(Water_stds['Ratio to standard'])
+print(type(water_blank))
 water_blank_1sigma = np.std(Water_stds['Ratio to standard'])
+waters['MCC'] = water_blank
+waters['MCC_error'] = water_blank_1sigma
 print("For waters, the MCC (the average of all available standards) is: {} \u00B1 {}".format(round(water_blank, rounding_decimal), round(water_blank_1sigma, rounding_decimal)))
+print("Right now, the code does a great job duplicating MCC calculated from RLIMS, but not the  Check RLIMS script for MCC error type (1-sigma? std error?)")
 # </editor-fold>
+
+
+"""
+As Jocelyn asked, if you want the calculations to be done in RLIMS, then you can skip this step, and let the code just 
+write everything above to excel. But, I want all the calculatinos to be done via python to save time, and then the files
+be merged into RLIMS. We can add the calculations here and not use them if we don't want to use them. 
+"""
+
+# This function uses the equations built from RLIMS to calculate the corrected fraction modern.
+# rts = ratio to standard of the sample.
+# MCC = the blanks found in the step / section above
+# DCCstd & DCC = for large samples, set these to zero
+# delta13C_In_Calculation = grab this variable from the imported data from RLIMS x['delta13C_In_Calculation']
+# sampling_date = grab from RLIMS data x['Collection Decimal Date']
+# dataframe used =
+
+def radiocarbon_calcs(dataframe_used):
+    template_dataframe = dataframe_used  # import the real dataframe for calculation / variable addition
+    rts = template_dataframe['Ratio to standard']
+    MCC = template_dataframe['MCC']
+    delta13C_In_Calculation = template_dataframe['delta13C_In_Calculation']
+    sampling_date = template_dataframe['Collection Decimal Date']
+    DCCstd = 0
+    DCC = 0
+
+    RTS_corrected = (rts - MCC)/(1-MCC)
+    Std_spec_act_const = 1.040  # Standard multiplier
+    rts_stds_av = prim_std_average           # see from above. I'm keeping rts_stds_av as the variable name since this is how it is in RLIMS
+    delta13C_stds_av = prim_std_13average    # same as line above, want to keep VAR name the same as RLIMS
+    F_corrected_normed = (RTS_corrected /(Std_spec_act_const * rts_stds_av)) * \
+                         ((1 + delta13C_stds_av/ 1000) / (1 + delta13C_In_Calculation / 1000))
+    # TODO propogate error in FM calculation
+    age_corr = np.exp((1950-sampling_date)/8267)
+    D14C = 1000*(F_corrected_normed*age_corr - 1)
+    # TODO D14C_err = 1000 * FM error
+
+    template_dataframe['RTS_corrected'] = RTS_corrected
+    template_dataframe['F_corrected_normed'] = F_corrected_normed
+    template_dataframe['D14C'] = D14C
+
+    return template_dataframe
+
+AAA = radiocarbon_calcs(AAA)
 
 # <editor-fold desc="Write Data to Excel">
 writer = pd.ExcelWriter('Results.xlsx', engine='openpyxl')
