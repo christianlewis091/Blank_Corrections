@@ -15,13 +15,16 @@ import pandas as pd
 category_list = ['GB', 'CBIn','CBOr','OxI','UNSt', 'UNIn','UNOr']
 
 # Put in here the list of processes that I want to check for in order to correct samples.
-processes = ['Water CO2 Evolution','Cellulose Extraction','Acid Alkali Acid']
+processes = ['Water CO2 Evolution',
+             'Cellulose Extraction',
+             'Acid Alkali Acid',
+             'Carbonate CO2 Evolution']
 
 # currently this list is based on what I need to correct TW 3416. In the future as we
 # correct more samples, like RPO, air, grass, etc, we'll need to expand this list. Hopefully it can be quite
 # scaleable over time.
 R_numbers = pd.DataFrame({"Water CO2 Evolution": '14047/11',
+                          "Carbonate CO2 Evolution": '14047/1',
                           "Cellulose Extraction": '40142/1',
                           "Acid Alkali Acid":     '40142/2'}, index=[0])
 
-secondaries = ['FIRI-D: wood', 'LAC1 coral', 'LAA1 coral']

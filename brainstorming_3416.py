@@ -20,6 +20,7 @@ The third will link it to the standards of a similar type for later blank correc
 import pandas as pd
 import numpy as np
 from Process_List_Library import processes
+from blank_correction_functions import long_date_to_decimal_date
 pd.options.mode.chained_assignment = None  # default='warn'
 """
 This script is written to use a specific output file from RLIMS which includes exported data from the tables:
@@ -89,7 +90,8 @@ df = df.dropna(subset='AMS Category ID XCAMS')                       # THis line
 # Now I'm going to concatonate the old and new dataframes together, and drop the duplicates.
 # This allows me to see which rows contain empty cells in the pre-processing column. (Usually OX-1's).
 df_new = pd.concat([cleaneddf, df], ignore_index=True, sort =True).drop_duplicates(['cat_index'], keep='first')
-df_new = df_new.dropna(subset = 'Category In Calculation')           # Drop empty lines
+df_new = df_new.dropna(subset = 'Category In Calculation').reset_index(drop=True)           # Drop empty lines
+# df_new.to_excel('Results.xlsx')
 # </editor-fold>
 
 # <editor-fold desc="Primary Standard Quality Check">
@@ -140,36 +142,64 @@ print()
 """
 Now, link the data that we just cleaned with blanks and standards of the same type. 
 """
-# For example, in df_new:
-# TODO: For these samples, coordinate them with standards with R# XXXX/ X
-AAA = df_new.loc[(df_new['AMS Category ID XCAMS'] == 'UNOr') | (df_new['Cleaned PreProcess Information'] == 'Acid Alkali Acid')]
-Cell = df_new.loc[(df_new['AMS Category ID XCAMS'] == 'UNOr') | (df_new['Cleaned PreProcess Information'] == 'Cellulose Extraction')]
-waters = df_new.loc[(df_new['AMS Category ID XCAMS'] == 'UNIn') | (df_new['Cleaned PreProcess Information'] == 'Water CO2 Evolution')]
-AAA_std = df_new.loc[(df_new['AMS Category ID XCAMS'] == 'UNSt') | (df_new['Cleaned PreProcess Information'] == 'Acid Alkali Acid')]
-Cell_std = df_new.loc[(df_new['AMS Category ID XCAMS'] == 'UNSt') | (df_new['Cleaned PreProcess Information'] == 'Cellulose Extraction')]
-waters_std = df_new.loc[(df_new['AMS Category ID XCAMS'] == 'UNSt') | (df_new['Cleaned PreProcess Information'] == 'Water CO2 Evolution')]
+# UNKNOWNS
+AAA = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
+                  (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
+                  (df_new['Cleaned PreProcess Information'] == 'Acid Alkali Acid')].reset_index(drop=True)
+
+Cell = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
+                   (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
+                   (df_new['Cleaned PreProcess Information'] == 'Cellulose Extraction')].reset_index(drop=True)
+
+waters = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
+                     (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
+                    (df_new['Cleaned PreProcess Information'] == 'Water CO2 Evolution')].reset_index(drop=True)
 
 # Historical standard data (This will need to be re-downloaded each time we do blank corrections in order to get the
 # most up to date blanks
 stds_hist = pd.read_excel(r'C:\Users\clewis\Desktop\hist_stds.xlsx')
 
-AAA_stds = stds_hist.loc[(stds_hist['R'] == '40142/2')]
-Cell_stds = stds_hist.loc[(stds_hist['R'] == '40142/1')]
-Water_stds = stds_hist.loc[(stds_hist['R'] == '14047/11')]
+AAA_stds = stds_hist.loc[(stds_hist['R'] == '40142/2')]               # FIND ALL THE AAA STANDARDS IN THE HISTORICAL SET
+Cell_stds = stds_hist.loc[(stds_hist['R'] == '40142/1')]              # FIND ALL THE cellulose STANDARDS IN THE HISTORICAL SET
+Water_stds = stds_hist.loc[(stds_hist['R'] == '14047/11')]            # FIND ALL THE WATERLINE STANDARDS IN THE HISTORICAL SET
+chosen_stds = pd.concat([AAA_stds, Cell_stds, Water_stds]).dropna(subset = 'Date Run').reset_index(drop=True)  # CONCAT so I can clean them up in one shot
 
-mt_dataframe = pd.DataFrame
-x = [AAA_stds, Cell_stds, Water_stds]
-for i in range(0, len(x)):
-    group = x[i]
-    rts = group['Ratio to standard']
-    rts_average = np.average(rts)
-    rts_std = np.std(rts)
-    stds_df = pd.DataFrame({"Standard Group": group['R'],
-                            "Ratio to standard Average": rts_average,
-                            "Ratio to standard 1-sigma": rts_std})
+x = chosen_stds['Date Run']
+chosen_stds['Date Run'] = long_date_to_decimal_date(x)                     # This line converts the dates to "Decimal Date" so that I can find only dates that are 0.5 years max before most recent date
+date_bound = max(chosen_stds['Date Run']) - 0.5
+chosen_stds = chosen_stds.loc[(chosen_stds['Date Run'] > date_bound)]      # Index: find ONLY dates that are more recent than 1/2 year
+chosen_stds = chosen_stds.loc[(chosen_stds['Quality Flag'] != 'X..')]      # Index: drop everything that contains a quality flag
+chosen_stds = chosen_stds.loc[(chosen_stds['Weight Initial'] > 0.3)]       # Drop everything that is smaller than 0.3 mg.
 
-    # mt_dataframe.concat(stds_df, ignore_index=True)
+chosen_stds = chosen_stds[['Sample Description','Category In Calculation', 'Job', 'TP', 'R', 'Ratio to standard', 'Ratio to standard error', 'Quality Flag', 'TW']]
 
+AAA_stds = chosen_stds.loc[(chosen_stds['R'] == '40142/2')].reset_index(drop=True)                         # Re-isolate the AAA standards
+Cell_stds = chosen_stds.loc[(chosen_stds['R'] == '40142/1')].reset_index(drop=True)                        # Re-isolate the Cellulose standards
+Water_stds = chosen_stds.loc[(chosen_stds['R'] == '14047/11')].reset_index(drop=True)                      # Re-isolate the WATERLINE standards
+
+rounding_decimal = 5
+AAA_blank = np.average(AAA_stds['Ratio to standard'])                          # Calculate the average RTS of this blank, and its standard deviation. Then print it with
+AAA_blank_1sigma = np.std(AAA_stds['Ratio to standard'])                       # the number of decimal points specified above.
+print("For AAA, the MCC (the average of all available standards) is: {} \u00B1 {}".format(round(AAA_blank, rounding_decimal), round(AAA_blank_1sigma, rounding_decimal)))
+
+Cell_blank = np.average(Cell_stds['Ratio to standard'])
+Cell_blank_1sigma = np.std(Cell_stds['Ratio to standard'])
+print("For Cellulose, the MCC (the average of all available standards) is: {} \u00B1 {}".format(round(Cell_blank, rounding_decimal), round(Cell_blank_1sigma, rounding_decimal)))
+
+water_blank = np.average(Water_stds['Ratio to standard'])
+water_blank_1sigma = np.std(Water_stds['Ratio to standard'])
+print("For waters, the MCC (the average of all available standards) is: {} \u00B1 {}".format(round(water_blank, rounding_decimal), round(water_blank_1sigma, rounding_decimal)))
+
+writer = pd.ExcelWriter('Results.xlsx', engine='openpyxl')
+df_new.to_excel(writer, sheet_name='Wheel Summary')
+AAA.to_excel(writer, sheet_name='Unknowns (AAA)')
+Cell.to_excel(writer, sheet_name='Unknowns (Cellulose)')
+waters.to_excel(writer, sheet_name='Unknowns (Waters)')
+AAA_stds.to_excel(writer, sheet_name='Chosen Standards (AAA)')
+Cell_stds.to_excel(writer, sheet_name='Chosen Standards (Cellulose)')
+Water_stds.to_excel(writer, sheet_name='Chosen Standards (Waters)')
+
+writer.save()
 
 
 
