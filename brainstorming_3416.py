@@ -26,6 +26,9 @@ pd.options.mode.chained_assignment = None  # default='warn'
 This script is written to use a specific output file from RLIMS which includes exported data from the tables:
 "Process List"
 "AMS Submission Results Complete"
+
+Currently, this script should be able to determine MCC for wheels that contain organics processed with AAA and Cellulose
+and waters. 
 """
 df = pd.read_excel(r'C:\Users\clewis\Desktop\3416_2.xlsx')  # export the file from RLIMS containing TW DATA
 
@@ -139,9 +142,11 @@ if len(result) > 0:
 print()
 # </editor-fold>
 
+# <editor-fold desc="Select Standards that will be used for correction">
 """
 Now, link the data that we just cleaned with blanks and standards of the same type. 
 """
+# TODO: When new processes need to be added to the script (Carbonate CO2 Evolution, AIRS, GRASS), it needs to be added HERE.
 # UNKNOWNS
 AAA = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
                   (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
@@ -189,7 +194,9 @@ print("For Cellulose, the MCC (the average of all available standards) is: {} \u
 water_blank = np.average(Water_stds['Ratio to standard'])
 water_blank_1sigma = np.std(Water_stds['Ratio to standard'])
 print("For waters, the MCC (the average of all available standards) is: {} \u00B1 {}".format(round(water_blank, rounding_decimal), round(water_blank_1sigma, rounding_decimal)))
+# </editor-fold>
 
+# <editor-fold desc="Write Data to Excel">
 writer = pd.ExcelWriter('Results.xlsx', engine='openpyxl')
 df_new.to_excel(writer, sheet_name='Wheel Summary')
 AAA.to_excel(writer, sheet_name='Unknowns (AAA)')
@@ -200,6 +207,7 @@ Cell_stds.to_excel(writer, sheet_name='Chosen Standards (Cellulose)')
 Water_stds.to_excel(writer, sheet_name='Chosen Standards (Waters)')
 
 writer.save()
+# </editor-fold>
 
 
 
