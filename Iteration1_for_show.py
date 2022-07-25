@@ -248,10 +248,22 @@ for i in range(0, len(types2)):
         carbonates.to_excel(writer, sheet_name='Unknowns (Carbonates)')
         carbonate_stds.to_excel(writer, sheet_name='Chosen Standards (Carbonates)')
 
+
+
+
 writer.save()
 # </editor-fold>
-# TODO add the replacement fields to simplify input and output like I did with the finance sheet.
+# TODO generate text file with results
+# TODO get all MCC's/results onto one sheet for importing back into RLIMS
+# TODO Add how to deal with AIR wheels based on how we correct TW 3417 (search for description? instad of pre-process?" Description = "CO2_from_whole_air_flask"
+# TODO UNKNOWN AIR is category in Calculation!  use for air sample correction
+# TODO add WHEEL TO WHEEL ERROR table (download and load in the script, see Layout / Wheel to Wheel Errors), goes into the error calculation.
+# TODO for airs take the whole previous year
+# TODO 40430/3
+# TODO check AMS 13C vs IRMS 13C (< 5 % error ok)
 
+# TODO add BONE = "Bone Chemical" = pretreatment
+# TODO add SHELL = "Carbonate CO2 evolution"
 
 
 
