@@ -241,8 +241,8 @@ for i in range(0, len(types2)):
 
     if types2[i] == 'Carbonate CO2 Evolution':
         carbonates = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
-                             (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
-                            (df_new['Cleaned PreProcess Information'] == 'Carbonate CO2 Evolution')].reset_index(drop=True)
+                                 (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
+                                (df_new['Cleaned PreProcess Information'] == 'Carbonate CO2 Evolution')].reset_index(drop=True)
         carbonate_stds = stds_hist.loc[(stds_hist['R'] == '14047/1')].reset_index(drop=True)             # FIND ALL THE WATERLINE STANDARDS IN THE HISTORICAL SET
         carbonates = radiocarbon_calcs(carbonate_stds, carbonates, 'carbonates')
         carbonates.to_excel(writer, sheet_name='Unknowns (Carbonates)')

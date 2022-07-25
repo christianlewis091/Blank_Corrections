@@ -161,10 +161,10 @@ Cell = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                
                    (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
                    (df_new['Cleaned PreProcess Information'] == 'Cellulose Extraction')].reset_index(drop=True)
 
-waters = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
+waters = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNIn') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
                      (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
                     (df_new['Cleaned PreProcess Information'] == 'Water CO2 Evolution')].reset_index(drop=True)
-
+print("Length of waters is " + str(len(waters)))
 # Historical standard data (This will need to be re-downloaded each time we do blank corrections in order to get the
 # most up to date blanks
 stds_hist = pd.read_excel(r'C:\Users\clewis\Desktop\hist_stds.xlsx')
@@ -254,7 +254,7 @@ Cell = radiocarbon_calcs(Cell)
 waters = radiocarbon_calcs(waters)
 
 # <editor-fold desc="Write Data to Excel">
-writer = pd.ExcelWriter('Results.xlsx', engine='openpyxl')
+writer = pd.ExcelWriter('Results_3416.xlsx', engine='openpyxl')
 df_new.to_excel(writer, sheet_name='Wheel Summary')
 AAA.to_excel(writer, sheet_name='Unknowns (AAA)')
 Cell.to_excel(writer, sheet_name='Unknowns (Cellulose)')
