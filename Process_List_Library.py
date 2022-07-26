@@ -18,7 +18,8 @@ category_list = ['GB', 'CBIn','CBOr','OxI','UNSt', 'UNIn','UNOr']
 processes = ['Water CO2 Evolution',
              'Cellulose Extraction',
              'Acid Alkali Acid',
-             'Carbonate CO2 Evolution']
+             'Carbonate CO2 Evolution',
+             'Bone Chemical']
 
 # currently this list is based on what I need to correct TW 3416. In the future as we
 # correct more samples, like RPO, air, grass, etc, we'll need to expand this list. Hopefully it can be quite
