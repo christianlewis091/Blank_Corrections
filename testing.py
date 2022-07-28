@@ -31,9 +31,9 @@ This script is written to use a specific output file from RLIMS which includes e
 Currently, this script should be able to determine MCC for wheels that contain organics processed with AAA and Cellulose
 and waters. 
 """
-input_name = input("What is the TW of this wheel? Print in format: TW_XXXX_X")
 
-df = pd.read_excel(r'C:\Users\clewis\Desktop\{}.xlsx'.format(input_name))  # export the file from RLIMS containing TW DATA
+
+df = pd.read_excel(r'C:\Users\clewis\Desktop\TW_3416_2.xlsx')  # export the file from RLIMS containing TW DATA
 
 
 # <editor-fold desc="Pre Processing / Data Organizing from RLIMS">
@@ -192,93 +192,99 @@ def radiocarbon_calcs(stds_dataframe, sample_dataframe, name):
 
 # Historical standard data (This will need to be re-downloaded each time we do blank corrections in order to get the
 # most up to date blanks
-stds_hist = pd.read_excel(r'C:\Users\clewis\Desktop\hist_stds.xlsx')         # Import and clean up the historical standards information
-stds_hist = stds_hist.dropna(subset = 'Date Run').reset_index(drop = True)
-x = stds_hist['Date Run']
-stds_hist['Date Run'] = long_date_to_decimal_date(x)                     # This line converts the dates to "Decimal Date" so that I can find only dates that are 0.5 years max before most recent date
-date_bound = max(stds_hist['Date Run']) - 0.5
-stds_hist= stds_hist.loc[(stds_hist['Date Run'] > date_bound)]      # Index: find ONLY dates that are more recent than 1/2 year
-stds_hist = stds_hist.loc[(stds_hist['Quality Flag'] != 'X..')]      # Index: drop everything that contains a quality flag
-stds_hist = stds_hist.loc[(stds_hist['Weight Initial'] > 0.3)]       # Drop everything that is smaller than 0.3 mg.
-stds_hist = stds_hist[['Sample Description','Category In Calculation', 'Job', 'TP', 'R', 'Ratio to standard', 'Ratio to standard error', 'Quality Flag', 'TW']]
+# stds_hist = pd.read_excel(r'C:\Users\clewis\Desktop\hist_stds.xlsx')         # Import and clean up the historical standards information
+# stds_hist = stds_hist.dropna(subset = 'Date Run').reset_index(drop = True)
+# x = stds_hist['Date Run']
+# stds_hist['Date Run'] = long_date_to_decimal_date(x)                     # This line converts the dates to "Decimal Date" so that I can find only dates that are 0.5 years max before most recent date
+# date_bound = max(stds_hist['Date Run']) - 0.5
+# stds_hist= stds_hist.loc[(stds_hist['Date Run'] > date_bound)]      # Index: find ONLY dates that are more recent than 1/2 year
+# stds_hist = stds_hist.loc[(stds_hist['Quality Flag'] != 'X..')]      # Index: drop everything that contains a quality flag
+# stds_hist = stds_hist.loc[(stds_hist['Weight Initial'] > 0.3)]       # Drop everything that is smaller than 0.3 mg.
+# stds_hist = stds_hist[['Sample Description','Category In Calculation', 'Job', 'TP', 'R', 'Ratio to standard', 'Ratio to standard error', 'Quality Flag', 'TW']]
+#
+# # # I want to identify which types of samples are in there:
+# types2 = df_new['Cleaned PreProcess Information'].dropna()
+# types2 = np.unique(types2)
+#
+# writer = pd.ExcelWriter('{}_Results.xlsx'.format(input_name), engine='openpyxl')
+# df_new.to_excel(writer, sheet_name='SummaryforRLIMS_Merge')
+#
+# summary = df_new
+# for i in range(0, len(types2)):
+#
+#     if types2[i] == 'Acid Alkali Acid':
+#         AAA = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the columns is (UNOr OR UNSt) AND Acid Alkali Acid
+#                           (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
+#                          (df_new['Cleaned PreProcess Information'] == 'Acid Alkali Acid')].reset_index(drop=True)
+#         AAA_stds = stds_hist.loc[(stds_hist['R'] == '40142/2')].reset_index(drop=True)                # FIND ALL THE AAA STANDARDS IN THE HISTORICAL SET
+#         AAA = radiocarbon_calcs(AAA_stds, AAA, 'AAA')
+#         AAA.to_excel(writer, sheet_name='Unknowns (AAA)')
+#         AAA_stds.to_excel(writer, sheet_name='Chosen Standards (AAA)')
+#         summary = pd.concat([AAA, summary], ignore_index=True).drop_duplicates(['cat_index'], keep='first')
+#
+#     if types2[i] == 'Cellulose Extraction':
+#         Cell = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
+#                            (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
+#                           (df_new['Cleaned PreProcess Information'] == 'Cellulose Extraction')].reset_index(drop=True)
+#         Cell_stds = stds_hist.loc[(stds_hist['R'] == '40142/1')].reset_index(drop=True)               # FIND ALL THE cellulose STANDARDS IN THE HISTORICAL SET
+#         Cell = radiocarbon_calcs(Cell_stds, Cell, 'cellulose')
+#         Cell.to_excel(writer, sheet_name='Unknowns (Cellulose)')
+#         Cell_stds.to_excel(writer, sheet_name='Chosen Standards (Cellulose)')
+#         summary = pd.concat([Cell, summary], ignore_index=True).drop_duplicates(['cat_index'], keep='first')
+#
+#     if types2[i] == 'Water CO2 Evolution':
+#         waters = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNIn') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
+#                              (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
+#                             (df_new['Cleaned PreProcess Information'] == 'Water CO2 Evolution')].reset_index(drop=True)
+#         Water_stds = stds_hist.loc[(stds_hist['R'] == '14047/11')].reset_index(drop=True)             # FIND ALL THE WATERLINE STANDARDS IN THE HISTORICAL SET
+#         waters = radiocarbon_calcs(Water_stds, waters, 'waters')
+#         waters.to_excel(writer, sheet_name='Unknowns (Waters)')
+#         Water_stds.to_excel(writer, sheet_name='Chosen Standards (Waters)')
+#         summary = pd.concat([waters, summary], ignore_index=True).drop_duplicates(['cat_index'], keep='first')
+#
+#     if types2[i] == 'Carbonate CO2 Evolution':
+#         carbonates = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
+#                                  (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
+#                                 (df_new['Cleaned PreProcess Information'] == 'Carbonate CO2 Evolution')].reset_index(drop=True)
+#         carbonate_stds = stds_hist.loc[(stds_hist['R'] == '14047/1')].reset_index(drop=True)             # FIND ALL THE WATERLINE STANDARDS IN THE HISTORICAL SET
+#         carbonates = radiocarbon_calcs(carbonate_stds, carbonates, 'carbonates')
+#         carbonates.to_excel(writer, sheet_name='Unknowns (Carbonates)')
+#         carbonate_stds.to_excel(writer, sheet_name='Chosen Standards (Carbonates)')
+#         summary = pd.concat([carbonates, summary], ignore_index=True).drop_duplicates(['cat_index'], keep='first')
+#
+#     if types2[i] == 'Bone Chemical':
+#         bone = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
+#                            (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
+#                           (df_new['Cleaned PreProcess Information'] == 'Bone Chemical')].reset_index(drop=True)
+#         bone_stds = stds_hist.loc[(stds_hist['R'] == '14047/1')].reset_index(drop=True)             # FIND ALL THE WATERLINE STANDARDS IN THE HISTORICAL SET
+#         bone = radiocarbon_calcs(bone_stds, bone, 'bone')
+#         bone.to_excel(writer, sheet_name='Unknowns (bone)')
+#         bone_stds.to_excel(writer, sheet_name='Chosen Standards (bone)')
+#         summary = pd.concat([bone, summary], ignore_index=True).drop_duplicates(['cat_index'], keep='first')
+#
+#
+# # The air samples have a different pre-treatment process / have LESS or NO specific pretreatment for me to filter on, in the same way the organics, inorganic
+# # samples do. For this reason, I search based on the category in calculation.
+#
+# cats2 = df_new['Category In Calculation'].dropna()
+# cats2 = np.unique(cats2)
+# for i in range(0, len(cats2)):
+#     if cats2[i] == 'Unknown Air':
+#         air = df_new.loc[(df_new['Category In Calculation'] == 'Unknown Air')].reset_index(drop=True)
+#         air_stds = stds_hist.loc[(stds_hist['R'] == '40430/3')].reset_index(drop=True)             # FIND ALL THE WATERLINE STANDARDS IN THE HISTORICAL SET
+#         air = radiocarbon_calcs(air_stds, air, 'air')
+#         air.to_excel(writer, sheet_name='Unknowns (Air)')
+#         air_stds.to_excel(writer, sheet_name='Chosen Standards (Air)')
+#         summary = pd.concat([air, summary], ignore_index=True).drop_duplicates(['cat_index'], keep='first')
+# summary = summary.reset_index(drop = True)
+# summary.to_excel(writer, sheet_name='Summary for RLIMS Merge')
+# writer.save()
 
-# # I want to identify which types of samples are in there:
-types2 = df_new['Cleaned PreProcess Information'].dropna()
-types2 = np.unique(types2)
-
-writer = pd.ExcelWriter('{}_Results.xlsx'.format(input_name), engine='openpyxl')
-df_new.to_excel(writer, sheet_name='Wheel Summary')
-
-summary = df_new
-for i in range(0, len(types2)):
-
-    if types2[i] == 'Acid Alkali Acid':
-        AAA = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the columns is (UNOr OR UNSt) AND Acid Alkali Acid
-                          (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
-                         (df_new['Cleaned PreProcess Information'] == 'Acid Alkali Acid')].reset_index(drop=True)
-        AAA_stds = stds_hist.loc[(stds_hist['R'] == '40142/2')].reset_index(drop=True)                # FIND ALL THE AAA STANDARDS IN THE HISTORICAL SET
-        AAA = radiocarbon_calcs(AAA_stds, AAA, 'AAA')
-        AAA.to_excel(writer, sheet_name='Unknowns (AAA)')
-        AAA_stds.to_excel(writer, sheet_name='Chosen Standards (AAA)')
-        summary = pd.concat([AAA, summary], ignore_index=True).drop_duplicates(['cat_index'], keep='first')
-
-    if types2[i] == 'Cellulose Extraction':
-        Cell = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
-                           (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
-                          (df_new['Cleaned PreProcess Information'] == 'Cellulose Extraction')].reset_index(drop=True)
-        Cell_stds = stds_hist.loc[(stds_hist['R'] == '40142/1')].reset_index(drop=True)               # FIND ALL THE cellulose STANDARDS IN THE HISTORICAL SET
-        Cell = radiocarbon_calcs(Cell_stds, Cell, 'cellulose')
-        Cell.to_excel(writer, sheet_name='Unknowns (Cellulose)')
-        Cell_stds.to_excel(writer, sheet_name='Chosen Standards (Cellulose)')
-        summary = pd.concat([Cell, summary], ignore_index=True).drop_duplicates(['cat_index'], keep='first')
-
-    if types2[i] == 'Water CO2 Evolution':
-        waters = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNIn') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
-                             (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
-                            (df_new['Cleaned PreProcess Information'] == 'Water CO2 Evolution')].reset_index(drop=True)
-        Water_stds = stds_hist.loc[(stds_hist['R'] == '14047/11')].reset_index(drop=True)             # FIND ALL THE WATERLINE STANDARDS IN THE HISTORICAL SET
-        waters = radiocarbon_calcs(Water_stds, waters, 'waters')
-        waters.to_excel(writer, sheet_name='Unknowns (Waters)')
-        Water_stds.to_excel(writer, sheet_name='Chosen Standards (Waters)')
-        summary = pd.concat([waters, summary], ignore_index=True).drop_duplicates(['cat_index'], keep='first')
-
-    if types2[i] == 'Carbonate CO2 Evolution':
-        carbonates = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
-                                 (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
-                                (df_new['Cleaned PreProcess Information'] == 'Carbonate CO2 Evolution')].reset_index(drop=True)
-        carbonate_stds = stds_hist.loc[(stds_hist['R'] == '14047/1')].reset_index(drop=True)             # FIND ALL THE WATERLINE STANDARDS IN THE HISTORICAL SET
-        carbonates = radiocarbon_calcs(carbonate_stds, carbonates, 'carbonates')
-        carbonates.to_excel(writer, sheet_name='Unknowns (Carbonates)')
-        carbonate_stds.to_excel(writer, sheet_name='Chosen Standards (Carbonates)')
-        summary = pd.concat([carbonates, summary], ignore_index=True).drop_duplicates(['cat_index'], keep='first')
-
-    if types2[i] == 'Bone Chemical':
-        bone = df_new.loc[((df_new['AMS Category ID XCAMS'] == 'UNOr') |                     # Find where the colums is (UNOr OR UNSt) AND Acid Alkali Acid
-                           (df_new['AMS Category ID XCAMS'] == 'UNSt')) &
-                          (df_new['Cleaned PreProcess Information'] == 'Bone Chemical')].reset_index(drop=True)
-        bone_stds = stds_hist.loc[(stds_hist['R'] == '14047/1')].reset_index(drop=True)             # FIND ALL THE WATERLINE STANDARDS IN THE HISTORICAL SET
-        bone = radiocarbon_calcs(bone_stds, bone, 'bone')
-        bone.to_excel(writer, sheet_name='Unknowns (bone)')
-        bone_stds.to_excel(writer, sheet_name='Chosen Standards (bone)')
-        summary = pd.concat([bone, summary], ignore_index=True).drop_duplicates(['cat_index'], keep='first')
+f = open("demofile2.txt", "a")
+f.write("Now the file has more content!")
+f.close()
 
 
-# The air samples have a different pre-treatment process / have LESS or NO specific pretreatment for me to filter on, in the same way the organics, inorganic
-# samples do. For this reason, I search based on the category in calculation.
-
-cats2 = df_new['Category In Calculation'].dropna()
-cats2 = np.unique(cats2)
-for i in range(0, len(cats2)):
-    if cats2[i] == 'Unknown Air':
-        air = df_new.loc[(df_new['Category In Calculation'] == 'Unknown Air')].reset_index(drop=True)
-        air_stds = stds_hist.loc[(stds_hist['R'] == '40430/3')].reset_index(drop=True)             # FIND ALL THE WATERLINE STANDARDS IN THE HISTORICAL SET
-        air = radiocarbon_calcs(air_stds, air, 'air')
-        air.to_excel(writer, sheet_name='Unknowns (Air)')
-        air_stds.to_excel(writer, sheet_name='Chosen Standards (Air)')
-        summary = pd.concat([air, summary], ignore_index=True).drop_duplicates(['cat_index'], keep='first')
-summary = summary.reset_index(drop = True)
-summary.to_excel(writer, sheet_name='Summary for RLIMS Merge')
-writer.save()
 # </editor-fold>
 # TODO generate text file with results
 # TODO get all MCC's/results onto one sheet for importing back into RLIMS
@@ -291,7 +297,6 @@ writer.save()
 
 # TODO add BONE = "Bone Chemical" = pretreatment
 # TODO add SHELL = "Carbonate CO2 evolution"
-
 
 
 
