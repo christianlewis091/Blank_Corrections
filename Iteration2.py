@@ -24,7 +24,10 @@ Add table: AMS Submission results complete
 Save, open into excel and rename as .xlsx.
 
 !!!!!!!!!!!!!!!!!!!!!How to get STANDARDS data in the proper format for this script!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-???
+# TODO Set a meeting with everyone associated with the blanks. Decide what are the next steps / what changes need to be made
+# TODO then ask valerie to write a script that can be run, that will batch download all the blanks from the previous year
+# TODO for categorization in the code. Right now it takes longer because the standards file is too long, but doesn't have to be.
+
 
 """
 import pandas as pd
@@ -33,14 +36,6 @@ from Process_List_Library import processes
 from blank_correction_functions import long_date_to_decimal_date
 from scipy.stats import sem
 pd.options.mode.chained_assignment = None  # default='warn'
-"""
-This script is written to use a specific output file from RLIMS which includes exported data from the tables:
-"Process List"
-"AMS Submission Results Complete"
-
-Currently, this script should be able to determine MCC for wheels that contain organics processed with AAA and Cellulose
-and waters. 
-"""
 
 
 input_name = input("What is the TW of this wheel? Print in format: TW_XXXX_X")
