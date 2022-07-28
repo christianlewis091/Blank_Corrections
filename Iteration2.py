@@ -12,7 +12,7 @@ The second section of the code does some quality checking on OX-1 data.
 The third will link it to the standards of a similar type for later blank correction
 
 
-!!!!!!!!!!!!!!!!!!!!!How to get data in the proper format for this script!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!How to get WHEEL data in the proper format for this script!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 In Export Page:
 
 Find the TW numbers for this wheel (should be 40).
@@ -22,7 +22,9 @@ Add tables: process List
 Add table: AMS Submission results complete
 
 Save, open into excel and rename as .xlsx.
-Then can run the script.
+
+!!!!!!!!!!!!!!!!!!!!!How to get STANDARDS data in the proper format for this script!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+???
 
 """
 import pandas as pd
